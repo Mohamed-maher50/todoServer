@@ -12,6 +12,7 @@ app.use(helmet());
 
 app.use(morgan("tiny"));
 app.use("/auth", require("./routes/auth"));
+app.use("/api", require("./routes/todo"));
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
