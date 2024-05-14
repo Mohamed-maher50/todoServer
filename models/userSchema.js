@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-
+const ProjectsModel = require("./ProjectSchema");
 const { hastPassword } = require("../utils/hashPassword");
 const userSchema = new mongoose.Schema({
   fullName: {
@@ -18,15 +18,21 @@ const userSchema = new mongoose.Schema({
     required: [true, "password"],
   },
   fullName: String,
-  birthDay: {
-    type: Date,
-    required: true,
-    trim: true,
-  },
 });
 
 userSchema.pre("save", async function () {
+  await new ProjectsModel({
+    projectName: "default",
+    user: this._id,
+  });
   this.password = await hastPassword(this.password);
 });
-
+userSchema.post("save", async function (doc, next) {
+  const defaultProject = await new ProjectsModel({
+    projectName: "default",
+    user: doc._id,
+  }).save();
+  if (defaultProject) return next();
+  else next(new Error("can't create default project"));
+});
 module.exports = mongoose.model("User", userSchema);
