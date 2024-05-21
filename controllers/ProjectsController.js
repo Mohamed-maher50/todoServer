@@ -1,5 +1,7 @@
 const expressAsyncHandler = require("express-async-handler");
+const { NotFoundDocument } = require("../constants/ErrorsType");
 const ProjectsModel = require("../models/ProjectSchema");
+const ErrorHandler = require("../utils/ErrorHandler");
 const newProject = expressAsyncHandler(async (req, res) => {
   const newProject = await new ProjectsModel({
     user: req.user._id,
@@ -7,6 +9,7 @@ const newProject = expressAsyncHandler(async (req, res) => {
   }).save();
   res.status(200).json({ data: newProject });
 });
+
 const updateProject = expressAsyncHandler(async (req, res, next) => {
   const { id } = req.params;
   const project = await ProjectsModel.findOneAndUpdate(
@@ -22,15 +25,16 @@ const updateProject = expressAsyncHandler(async (req, res, next) => {
     }
   );
   if (!project)
-    return next(new Error("not found project with this id", { cause: 404 }));
+    return next(new ErrorHandler(NotFoundDocument, "not found project", 404));
   res.status(202).json(project);
 });
-const deleteProject = expressAsyncHandler(async (req, res) => {
+const deleteProject = expressAsyncHandler(async (req, res, next) => {
   const { id } = req.params;
   const project = await ProjectsModel.findById(id);
-  if (!project) return next(new Error("not found task with this id"));
+  if (!project)
+    return next(new ErrorHandler(NotFoundDocument, "not found project", 404));
   if (project.user != req.user.id)
-    return next(new Error("You are not allowed to delete"));
+    return next(new ErrorHandler(FORBIDDEN, "can't delete this project", 403));
 
   await project.deleteOne();
   res.status(200).json(project);

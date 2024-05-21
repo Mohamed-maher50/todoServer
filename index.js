@@ -3,6 +3,7 @@ const app = express();
 const helmet = require("helmet");
 const cors = require("cors");
 var morgan = require("morgan");
+const { ValidationError } = require("./constants/ErrorsType");
 require("dotenv").config();
 require("./db/connection");
 app.use(express.json());
@@ -18,12 +19,15 @@ app.all("*", (_, res) => {
   res.status(404).json({ msg: "can't find this Route" });
 });
 app.use((err, req, res, next) => {
-  console.log(err);
-  if (err.name === "ValidationError")
+  // console.log(err.errors);
+  if (err.name === ValidationError)
     return res.status(err.cause || 400).json({
-      errors: err.errors,
+      [err.name || "errors"]: err.errors,
     });
-  return res.status(err.cause || 500).json({ msg: err.message });
+
+  return res
+    .status(err.status)
+    .json({ msg: err.message, name: err.name, status: err.status });
 });
 
 const PORT = process.env.PORT || 5000;
@@ -32,6 +36,7 @@ app.listen(PORT, () => {
   console.log("listen in port 5000");
 });
 process.on("unhandledRejection", (err) => {
-  console.log(err);
-  process.exit(1);
+  server.close(() => {
+    process.exit(1);
+  });
 });

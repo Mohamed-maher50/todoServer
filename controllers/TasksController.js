@@ -1,5 +1,8 @@
 const expressAsyncHandler = require("express-async-handler");
+const { NotFoundDocument, FORBIDDEN } = require("../constants/ErrorsType");
 const Tasks = require("../models/TasksSchema");
+const ErrorHandler = require("../utils/ErrorHandler");
+const refactor = require("./refactorController");
 const newTask = expressAsyncHandler(async (req, res) => {
   await new Tasks({
     user: req.user._id,
@@ -10,48 +13,9 @@ const newTask = expressAsyncHandler(async (req, res) => {
   }).save();
   res.sendStatus(200);
 });
-const ToggleCompletedTask = expressAsyncHandler(async (req, res, next) => {
-  const { id } = req.params;
-  const todo = await Tasks.findById(id);
-  if (!todo) return next(new Error("Task not found"));
-  if (todo.user != req.user.id)
-    return res.status(401).json({ msg: "unable to perform this task" });
-  const data = await todo.updateOne(
-    {
-      isDone: !todo.isDone,
-    },
-    { new: true }
-  );
-  res.status(200).json({ data });
-});
 
-const updateTask = expressAsyncHandler(async (req, res, next) => {
-  const { id } = req.params;
-  const task = await Tasks.findById(id);
-
-  if (!task) return next(new Error("Task not found"));
-  if (task.user != req.user.id)
-    return next(new Error("can't update this task"));
-  const afterUpdate = await task.updateOne(
-    {
-      $set: req.body,
-    },
-    {
-      new: true,
-    }
-  );
-  res.status(202).json({ data: afterUpdate });
-});
-
-const deleteTask = expressAsyncHandler(async (req, res) => {
-  const { id } = req.params;
-  const task = await Tasks.findById(id);
-  if (!task) return next(new Error("not found task with this id"));
-  if (task.user != req.user.id)
-    return next(new Error("You are not allowed to delete"));
-  await task.deleteOne();
-  res.sendStatus(204);
-});
+const updateTask = refactor.updateOne(Tasks);
+const deleteTask = refactor.FindByIdAndDelete(Tasks);
 const getTasks = expressAsyncHandler(async (req, res) => {
   let filtrationQueryString = req.query;
   // pagination
@@ -86,7 +50,7 @@ const getTasks = expressAsyncHandler(async (req, res) => {
 });
 module.exports = {
   newTask,
-  ToggleCompletedTask,
+
   updateTask,
   deleteTask,
   getTasks,

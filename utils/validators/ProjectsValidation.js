@@ -4,6 +4,7 @@ const {
 } = require("../../middlewares/ValidatorMiddleware");
 const ProjectModel = require("../../models/ProjectSchema");
 exports.newProjectValidator = [
+  body("projectName").trim().notEmpty().withMessage("project name is required"),
   body("projectName").custom(async (value, { req }) => {
     const project = await ProjectModel.findOne({
       projectName: value,
@@ -21,7 +22,7 @@ exports.deleteProjectValidator = [
 ];
 exports.updateProjectValidator = [
   check("id").isMongoId().withMessage("not valid id"),
-  body("projectName").optional({}).trim().notEmpty().withMessage("not valid"),
+  body("projectName").trim().notEmpty().withMessage("not valid"),
 
   ValidatorMiddleware,
 ];

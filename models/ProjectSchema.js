@@ -1,4 +1,6 @@
 const { default: mongoose } = require("mongoose");
+const { FORBIDDEN } = require("../constants/ErrorsType");
+const ErrorHandler = require("../utils/ErrorHandler");
 
 const TasksModel = require("./TasksSchema");
 const ProjectSchema = new mongoose.Schema({
@@ -25,11 +27,10 @@ ProjectSchema.pre(
 
     if (checkIfHasTasks)
       return next(
-        new Error(
-          "there are tasks related to this project delete all tasks first",
-          {
-            cause: 400,
-          }
+        new ErrorHandler(
+          FORBIDDEN,
+          "Delete all tasks related to this project.",
+          403
         )
       );
     next();

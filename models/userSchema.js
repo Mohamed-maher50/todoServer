@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const ProjectsModel = require("./ProjectSchema");
 const { hastPassword } = require("../utils/hashPassword");
+const ErrorHandler = require("../utils/ErrorHandler");
 const userSchema = new mongoose.Schema({
   fullName: {
     type: String,
@@ -33,6 +34,6 @@ userSchema.post("save", async function (doc, next) {
     user: doc._id,
   }).save();
   if (defaultProject) return next();
-  else next(new Error("can't create default project"));
+  else next(new ErrorHandler(undefined, "can't create default project", 500));
 });
 module.exports = mongoose.model("User", userSchema);
